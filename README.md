@@ -11,6 +11,7 @@ Acesse o repositório no GitHub, clique em **Code** > **Codespaces** > **Create 
 No terminal, rode:
 
 ```bash
+make build
 make run
 ```
 
