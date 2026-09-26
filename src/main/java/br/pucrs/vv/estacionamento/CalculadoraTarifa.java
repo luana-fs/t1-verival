@@ -23,29 +23,12 @@ public class CalculadoraTarifa {
 
     public double calcularTarifa(LocalDateTime entrada, LocalDateTime saida, boolean vip) {
 
-        System.out.println("Calculando tarifa para entrada: " + entrada + " e saída: " + saida);
-        System.out.println("hora início entrada: " + HORA_INICIO_ENTRADA);
-
         if (entrada == null || saida == null) {
             throw new IllegalArgumentException("Entrada e saída não podem ser nulas.");
         }
 
-        LocalTime horarioEntrada = entrada.toLocalTime();
-        LocalTime horarioSaida = saida.toLocalTime();
-
-        if (horarioEntrada.isBefore(HORA_INICIO_ENTRADA)
-            || horarioEntrada.isAfter(HORA_FIM_ENTRADA)) {
-            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
-        }
-
-        if (horarioSaida.isBefore(HORA_INICIO_ENTRADA)
-            || horarioSaida.isAfter(HORA_FIM_ENTRADA)) {
-            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
-        }
-
-        if (saida.isBefore(entrada)) {
-            throw new IllegalArgumentException("A hora de saída não pode ser anterior à hora de entrada.");
-        }
+        // ----- antes de calcular a tarifa, valida o horário de entrada e saída ------
+        validarHorario(entrada, saida);
 
         // Todo cliente tem 20 minutos de cortesia, ou seja, o valor a ser pago é zero.
         long minutos = Duration.between(entrada, saida).toMinutes();
@@ -53,9 +36,13 @@ public class CalculadoraTarifa {
             return 0.0;
         }
 
+
+        // ------- inicío do cálculo da tarifa --------
+        
+        double tarifa = VALOR_TARIFA_FIXA;
+
         // Acima de 1 hora e que não seja pernoite, o valor é incrementado de R$5,00 
         // a cada intervalo de 1 hora (inclusive). 
-        double tarifa = VALOR_TARIFA_FIXA;
         if (minutos > MINUTOS_TARIFA_FIXA) {
             long horasAdicionais = (minutos - MINUTOS_TARIFA_FIXA + 59) / 60;
             tarifa += horasAdicionais * VALOR_HORA_ADICIONAL;
@@ -74,5 +61,24 @@ public class CalculadoraTarifa {
 
         // Cliente VIP tem 50% de desconto sobre o valor final da tarifa. 
         return vip ? tarifa * (1 - PERCENTUAL_DESCONTO_VIP) : tarifa;
+    }
+
+    private void validarHorario(LocalDateTime entrada, LocalDateTime saida) {
+        LocalTime horarioEntrada = entrada.toLocalTime();
+        LocalTime horarioSaida = saida.toLocalTime();
+
+        if (horarioEntrada.isBefore(HORA_INICIO_ENTRADA)
+            || horarioEntrada.isAfter(HORA_FIM_ENTRADA)) {
+            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
+        }
+
+        if (horarioSaida.isBefore(HORA_INICIO_ENTRADA)
+            || horarioSaida.isAfter(HORA_FIM_ENTRADA)) {
+            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
+        }
+
+        if (saida.isBefore(entrada)) {
+            throw new IllegalArgumentException("A hora de saída não pode ser anterior à hora de entrada.");
+        }
     }
 }
