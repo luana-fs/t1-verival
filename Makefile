@@ -2,7 +2,7 @@
 IMAGE_NAME = estacionamento-devcontainer
 CONTAINER_CLI = npx -y @devcontainers/cli
 
-.PHONY: all setup build up run compile shell down clean
+.PHONY: all setup build up run compile test shell down clean
 
 all: build up run
 
@@ -31,6 +31,11 @@ compile: up
 run: compile
 	@echo "Running the Estacionamento application inside the container..."
 	$(CONTAINER_CLI) exec --workspace-folder . mvn exec:java -Dexec.mainClass="br.pucrs.vv.estacionamento.App"
+
+# Run the JUnit test suite inside the container
+test: up
+	@echo "Running JUnit tests inside the container..."
+	$(CONTAINER_CLI) exec --workspace-folder . mvn test
 
 # Open an interactive Bash shell inside the container environment
 shell: up
