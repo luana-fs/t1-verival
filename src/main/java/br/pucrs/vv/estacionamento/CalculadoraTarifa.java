@@ -1,7 +1,9 @@
 package br.pucrs.vv.estacionamento;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 public class CalculadoraTarifa {
 
@@ -36,30 +38,28 @@ public class CalculadoraTarifa {
             return 0.0;
         }
 
+        // ------- início do cálculo da tarifa --------
 
-        // ------- inicío do cálculo da tarifa --------
-        
-        double tarifa = VALOR_TARIFA_FIXA;
-
-        // Acima de 1 hora e que não seja pernoite, o valor é incrementado de R$5,00 
-        // a cada intervalo de 1 hora (inclusive). 
-        if (minutos > MINUTOS_TARIFA_FIXA) {
-            long horasAdicionais = (minutos - MINUTOS_TARIFA_FIXA + 59) / 60;
-            tarifa += horasAdicionais * VALOR_HORA_ADICIONAL;
+        // Cálculo de pernoites: dias entre as datas, menos 1 se a saída for antes das 08:00
+        long pernoites = ChronoUnit.DAYS.between(entrada.toLocalDate(), saida.toLocalDate());
+        if (saida.toLocalTime().isBefore(HORA_FIM_PERNOITE)) {
+            pernoites--;
         }
 
-
-        // Caso o veículo saia após as 08:00 da manhã do dia seguinte à sua entrada, 
-        // a tarifa é convertida para pernoite, cujo valor atual é de R$50,00 por pernoite.
-        boolean virouODia = saida.toLocalDate().isAfter(entrada.toLocalDate());
-        boolean entrouDeNoite = !entrada.toLocalTime().isBefore(HORA_INICIO_PERNOITE);
-        boolean saiuAntesDoLimite = !saida.toLocalTime().isAfter(HORA_FIM_PERNOITE);
-        boolean pernoite = virouODia && entrouDeNoite && saiuAntesDoLimite;
-        if (pernoite) {
-            tarifa = VALOR_PERNOITE;
+        double tarifa;
+        if (pernoites > 0) {
+            // Pela decisão A04, pernoite não soma horas adicionais
+            tarifa = pernoites * VALOR_PERNOITE;
+        } else {
+            tarifa = VALOR_TARIFA_FIXA;
+            // Acima de 1 hora, o valor é incrementado de R$ 5,00 a cada intervalo de 1 hora
+            if (minutos > MINUTOS_TARIFA_FIXA) {
+                long horasAdicionais = (minutos - MINUTOS_TARIFA_FIXA + 59) / 60;
+                tarifa += horasAdicionais * VALOR_HORA_ADICIONAL;
+            }
         }
 
-        // Cliente VIP tem 50% de desconto sobre o valor final da tarifa. 
+        // Cliente VIP tem 50% de desconto sobre o valor final da tarifa.
         return vip ? tarifa * (1 - PERCENTUAL_DESCONTO_VIP) : tarifa;
     }
 
@@ -69,12 +69,14 @@ public class CalculadoraTarifa {
 
         if (horarioEntrada.isBefore(HORA_INICIO_ENTRADA)
             || horarioEntrada.isAfter(HORA_FIM_ENTRADA)) {
-            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
+            throw new IllegalArgumentException("Entrada deve estar entre 08:00 e 23:59.");
         }
 
-        if (horarioSaida.isBefore(HORA_INICIO_ENTRADA)
-            || horarioSaida.isAfter(HORA_FIM_ENTRADA)) {
-            throw new IllegalArgumentException("Entrada e saída devem estar entre 08:00 e 23:59.");
+        // Saída bloqueada entre 02:00 e 07:59 (inclusive)
+        boolean saidaBloqueada = !horarioSaida.isBefore(HORA_INICIO_BLOQUEIO_SAIDA)
+                && !horarioSaida.isAfter(HORA_FIM_BLOQUEIO_SAIDA);
+        if (saidaBloqueada) {
+            throw new IllegalArgumentException("Saída bloqueada entre 02:00 e 07:59.");
         }
 
         if (saida.isBefore(entrada)) {
@@ -82,3 +84,4 @@ public class CalculadoraTarifa {
         }
     }
 }
+
