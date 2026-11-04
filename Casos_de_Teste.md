@@ -37,3 +37,57 @@ Esta tabela cobre todas as partições de equivalência (seção 5) e fronteiras
 | T31 | Partição Nulidade - Entrada nula (CI04) | nulo | 05/10/2026 10:00 | Não | Exceção |
 | T32 | Partição Nulidade - Saída nula (CI05) | 05/10/2026 10:00 | nulo | Não | Exceção |
 | T33 | Partição Tarifa sem teto - 1079 min (CV08) | 05/10/2026 08:00 | 06/10/2026 01:59 | Não | R$ 100,00 |
+| T34 | Cobertura de Desvio - Entrada após 23:59 com segundos (Linha 71, ramo `true` de `isAfter`) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
+
+---
+
+# Trabalho 2 - Parte A: Análise Crítica de Cobertura de Código (JaCoCo)
+
+## 1. Resultados Iniciais ("Antes" — Testes T01 a T33 do Trabalho 1)
+
+Com a execução dos 33 casos de teste originais do Trabalho 1 (`T01` a `T33`), o relatório de cobertura gerado pelo **JaCoCo** apresentou as seguintes métricas para a classe `CalculadoraTarifa`:
+
+| Métrica (JaCoCo) | Coberto / Total | Percentual |
+| :--- | :---: | :---: |
+| **Instruções (*Instructions*)** | 155 / 155 | **100%** |
+| **Desvios / Ramos (*Branches*)** | 25 / 26 | **96%** |
+| **Linhas (*Lines*)** | 35 / 35 | **100%** |
+| **Métodos (*Methods*)** | 4 / 4 | **100%** |
+| **Classes (*Classes*)** | 1 / 1 | **100%** |
+
+![Resumo JaCoCo - Antes](antes_jacoco_resumo.png)
+
+---
+
+## 2. Análise Crítica da Cobertura de Código
+
+Analisando o relatório detalhado do código-fonte no JaCoCo, verifica-se que **100% das instruções e linhas** foram executadas (nenhum trecho em vermelho). No entanto, a cobertura de desvios (*Branches*) atingiu **96% (25 de 26 ramos)**, restando **1 desvio parcialmente coberto** (marcado com losango amarelo na **linha 71** com a indicação *"1 of 2 branches missed"*):
+
+![Código JaCoCo - Antes](antes_jacoco_codigo.png)
+
+### Ponto onde é necessário novo caso de teste:
+* **Localização:** Método `validarHorario(LocalDateTime entrada, LocalDateTime saida)`, **linhas 70–71**:
+  ```java
+  if (horarioEntrada.isBefore(HORA_INICIO_ENTRADA)
+      || horarioEntrada.isAfter(HORA_FIM_ENTRADA)) {
+      throw new IllegalArgumentException("Entrada deve estar entre 08:00 e 23:59.");
+  }
+  ```
+* **Motivo da não cobertura:**
+  * A constante `HORA_FIM_ENTRADA` é definida como `LocalTime.of(23, 59)` (equivalente a `23:59:00`).
+  * Todos os casos de teste do Trabalho 1 (`T01` a `T33`) utilizavam horários apenas com horas e minutos (`HH:mm`, com segundos zerados).
+  * No caso `T14` (`23:59`), `horarioEntrada.isAfter(23:59:00)` resulta em **`false`**.
+  * No caso `T15` (`00:00`), o horário de entrada é `00:00:00`, fazendo com que a primeira condição (`horarioEntrada.isBefore(08:00)`) já seja **`true`** (ocorrendo avaliação por curto-circuito do operador `||`) e, além disso, `00:00` não é posterior a `23:59`.
+  * Consequentemente, a condição `horarioEntrada.isAfter(HORA_FIM_ENTRADA)` na **linha 71** nunca assumiu o valor **`true`**.
+* **Como cobrir o desvio faltante:**
+  * É necessário um caso de teste onde `horarioEntrada.isBefore(08:00)` seja **`false`** e `horarioEntrada.isAfter(23:59:00)` seja **`true`**.
+  * Isso ocorre exclusivamente quando o horário de entrada possui segundos acima de zero no minuto `23:59` (entre `23:59:01` e `23:59:59`), como **`05/10/2026 23:59:30`**, provocando o lançamento de `IllegalArgumentException` pelo ramo verdadeiro da linha 71.
+
+---
+
+## 3. Conjunto de Novos Casos de Teste (Tabular)
+
+| ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
+
