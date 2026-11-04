@@ -91,3 +91,9 @@ Analisando o relatório detalhado do código-fonte no JaCoCo, verifica-se que **
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
 
+## Casos novos do T2 (cobertura)
+
+| ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
+
