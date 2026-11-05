@@ -93,6 +93,10 @@ Analisando o relatório detalhado do código-fonte no JaCoCo, verifica-se que **
 
 ## Casos novos do T2 (cobertura)
 
+| ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
+
 
 ---
 
@@ -202,7 +206,4 @@ Os 34 casos matam **100% dos mutantes não equivalentes (25 de 25)**. O score de
 A mutação mostrou o que a cobertura não mostrava: 100% de linhas executadas não garante que os testes conferem o resultado, e foi o PIT que revelou a redundância do `if` da linha 56. Ao mesmo tempo, o desvio que o JaCoCo apontou na linha 71 não enfraquecia os testes do ponto de vista da mutação, o que confirma que as duas métricas se complementam.
 
 
-| ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
 
