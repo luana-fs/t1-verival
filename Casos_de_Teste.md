@@ -43,7 +43,15 @@ Esta tabela cobre todas as partições de equivalência (seção 5) e fronteiras
 
 # Trabalho 2 - Parte A: Análise Crítica de Cobertura de Código (JaCoCo)
 
-## 1. Resultados Iniciais ("Antes" — Testes T01 a T33 do Trabalho 1)
+## 1. Ferramenta e Configuração
+
+Foi usado o **JaCoCo 0.8.12** (`jacoco-maven-plugin`), integrado ao Maven. O objetivo `prepare-agent` acompanha a execução dos testes, e o objetivo `report`, ligado à fase `test`, gera o relatório em `target/site/jacoco/index.html` ao final do comando `mvn clean test`.
+
+A classe `App` foi **excluída da análise** (`<exclude>br/pucrs/vv/estacionamento/App.class</exclude>`), porque é só uma demonstração com `main`, sem regra de negócio. Assim, as métricas abaixo se referem apenas à classe `CalculadoraTarifa`.
+
+---
+
+## 2. Resultados Iniciais ("Antes" — Testes T01 a T33 do Trabalho 1)
 
 Com a execução dos 33 casos de teste originais do Trabalho 1 (`T01` a `T33`), o relatório de cobertura gerado pelo **JaCoCo** apresentou as seguintes métricas para a classe `CalculadoraTarifa`:
 
@@ -57,13 +65,17 @@ Com a execução dos 33 casos de teste originais do Trabalho 1 (`T01` a `T33`), 
 
 ![Resumo JaCoCo - Antes](antes_jacoco_resumo.png)
 
+*Página inicial do JaCoCo com os casos do T1 (T01–T33): 0 de 155 instruções perdidas (100%) e 1 de 26 desvios perdidos (96%).*
+
 ---
 
-## 2. Análise Crítica da Cobertura de Código
+## 3. Análise Crítica da Cobertura de Código
 
 Analisando o relatório detalhado do código-fonte no JaCoCo, verifica-se que **100% das instruções e linhas** foram executadas (nenhum trecho em vermelho). No entanto, a cobertura de desvios (*Branches*) atingiu **96% (25 de 26 ramos)**, restando **1 desvio parcialmente coberto** (marcado com losango amarelo na **linha 71** com a indicação *"1 of 2 branches missed"*):
 
 ![Código JaCoCo - Antes](antes_jacoco_codigo.png)
+
+*Código da `CalculadoraTarifa` no JaCoCo com os casos do T1: a linha 71 aparece em amarelo, com 1 de 2 desvios não executado.*
 
 ### Ponto onde é necessário novo caso de teste:
 * **Localização:** Método `validarHorario(LocalDateTime entrada, LocalDateTime saida)`, **linhas 70–71**:
@@ -82,21 +94,43 @@ Analisando o relatório detalhado do código-fonte no JaCoCo, verifica-se que **
 * **Como cobrir o desvio faltante:**
   * É necessário um caso de teste onde `horarioEntrada.isBefore(08:00)` seja **`false`** e `horarioEntrada.isAfter(23:59:00)` seja **`true`**.
   * Isso ocorre exclusivamente quando o horário de entrada possui segundos acima de zero no minuto `23:59` (entre `23:59:01` e `23:59:59`), como **`05/10/2026 23:59:30`**, provocando o lançamento de `IllegalArgumentException` pelo ramo verdadeiro da linha 71.
+* **Resultado esperado e divergência registrada:**
+  * O caso **T34** espera exceção, que é o comportamento atual do código.
+  * A decisão A09 do T1 diz que os segundos são ignorados. Por essa decisão, `23:59:30` seria tratado como `23:59`, que é uma entrada válida. O código, porém, compara o horário com segundos e rejeita a entrada.
+  * Fica registrada essa divergência entre o código e a decisão A09. A classe não foi alterada, pela regra de que o T2 trata apenas dos testes.
 
 ---
 
-## 3. Conjunto de Novos Casos de Teste (Tabular)
+## 4. Conjunto de Novos Casos de Teste (Tabular)
 
 | ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
 
-## Casos novos do T2 (cobertura)
+O caso foi implementado em `CalculadoraTarifaCoberturaTest.java`, separado dos testes do T1, e também foi incluído na tabela oficial no início deste arquivo.
 
-| ID | Técnica / Objetivo (Desvio coberto) | Entrada | Saída | VIP | Esperado |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **T34** | Cobertura de Desvio — Linha 71 (`horarioEntrada.isAfter(23:59)` avaliando para `true` com segundos) (CI01) | 05/10/2026 23:59:30 | 06/10/2026 08:00:00 | Não | Exceção |
+---
 
+## 5. Resultado Final ("Depois" — Testes T01 a T34)
+
+Com o caso T34, todos os desvios da `CalculadoraTarifa` passaram a ser executados:
+
+| Métrica (JaCoCo) | Antes (T01–T33) | Depois (T01–T34) |
+| :--- | :---: | :---: |
+| **Instruções (*Instructions*)** | 155 / 155 (100%) | 155 / 155 (100%) |
+| **Desvios / Ramos (*Branches*)** | 25 / 26 (**96%**) | 26 / 26 (**100%**) |
+| **Linhas (*Lines*)** | 35 / 35 (100%) | 35 / 35 (100%) |
+| **Métodos (*Methods*)** | 4 / 4 (100%) | 4 / 4 (100%) |
+
+![Resumo JaCoCo - Depois](depois_jacoco_resumo.png)
+
+*Página inicial do JaCoCo com os casos T01–T34: 0 de 155 instruções e 0 de 26 desvios perdidos (100% nos dois).*
+
+![Código JaCoCo - Depois](depois_jacoco_codigo.png)
+
+*Código da `CalculadoraTarifa` no JaCoCo com os casos T01–T34: a linha 71 passou de amarela para verde.*
+
+Um único caso foi suficiente para levar a cobertura de desvios de 96% para 100%. Cobertura de 100%, porém, só garante que cada linha e cada desvio foram executados, não que os testes conferem o resultado. É por isso que a Parte B usa o teste de mutação.
 
 ---
 
@@ -138,9 +172,17 @@ A *Line Coverage* foi de 36/36 para 35/35 sem nenhuma linha deixar de ser execut
 
 O caso **T34** (entrada às `23:59:30`) fechou o desvio da linha 71 no JaCoCo, mas não mudou o placar do PIT: o mutante dessa linha já era morto pelos casos do T1 (ver seção 3).
 
+![Resumo PIT - Antes](antes_pit_resumo.png)
+
+*Momento 1: página inicial do PIT só com os casos do T1 (T01–T33): Line Coverage 36/36, Mutation Coverage 25/26 e Test Strength 25/26.*
+
+![Mutantes PIT - Antes](antes_pit_mutantes.png)
+
+*Momento 1: lista Mutations do PIT só com os casos do T1. Todos os mutantes foram mortos, menos o da linha 56 (changed conditional boundary).*
+
 ![Resumo PIT - Depois da cobertura](depois_pit_resumo.png)
 
-*Página inicial do PIT depois dos testes de cobertura (T01–T34): Line Coverage 35/35, Mutation Coverage 25/26 e Test Strength 25/26.*
+*Momentos 2 e 3: página inicial do PIT depois dos testes de cobertura (T01–T34): Line Coverage 35/35, Mutation Coverage 25/26 e Test Strength 25/26.*
 
 ---
 
